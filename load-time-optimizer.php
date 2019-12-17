@@ -36,16 +36,32 @@ add_action( 'add_meta_boxes', 'wpdocs_register_meta_boxes' );
  */
 function wpdocs_my_display_callback( $post ) {
 	$stored = get_post_meta( $post->ID, 'lto_scripts', true );
-	// vl( $stored );
-
-	$settings = get_option( 'load_time_optimizer_scripts', array() );
-
+	$settings = get_post_meta( $post->ID, 'load_time_optimizer_scripts', true );
+	?>
+	<h2><b>Scripts</b></h2>
+	<?php
 	foreach ($settings as $key => $setting) {
-		$checked = in_array($setting, $stored) ? ' checked="checked" ' : '';
+		$checked = ( ! empty( $stored ) && in_array($setting, $stored) ) ? ' checked="checked" ' : '';
 		?>
 		<p>
 			<label>
 				<input <?php echo $checked; ?> type="checkbox" name="lto-scripts[]" value="<?php echo $setting; ?>" /><?php echo $setting; ?>
+			</label>
+		</p>
+		<?php
+	}
+
+	$stored = get_post_meta( $post->ID, 'lto_styles', true );
+	$settings = get_post_meta( $post->ID, 'load_time_optimizer_styles', true );
+	?>
+	<h2><b>Scripts</b></h2>
+	<?php
+	foreach ($settings as $key => $setting) {
+		$checked = ( ! empty( $stored ) && in_array($setting, $stored) ) ? ' checked="checked" ' : '';
+		?>
+		<p>
+			<label>
+				<input <?php echo $checked; ?> type="checkbox" name="lto-styles[]" value="<?php echo $setting; ?>" /><?php echo $setting; ?>
 			</label>
 		</p>
 		<?php
@@ -65,6 +81,9 @@ function wpdocs_save_meta_box( $post_id ) {
 	if( isset( $_POST['lto-scripts'] ) ) {
 		update_post_meta( $post_id, 'lto_scripts', $_POST['lto-scripts'] );
 	}
+	if( isset( $_POST['lto-styles'] ) ) {
+		update_post_meta( $post_id, 'lto_styles', $_POST['lto-styles'] );
+	}
 }
 add_action( 'save_post', 'wpdocs_save_meta_box' );
 
@@ -77,24 +96,46 @@ add_action( 'wp_head', function() {
 		return;
 	}
 
-	$old_settings = get_option( 'load_time_optimizer_scripts', array() );
+	if( is_singular() ) {
+		$old_settings = get_post_meta( get_the_ID(), 'load_time_optimizer_scripts', true );
 
-	global $wp_scripts;
-	$items = (array) $wp_scripts;
-	// vl( array_keys( $items['queue'] ) );
-	// wp_die();
-	// $items = wp_list_pluck( $items['registered'], 'handle' );
-	// $items = wp_list_pluck( $items['queue'], 'handle' );
-	// $items = array_keys( $items );
-	// 
-	?>
-	<p>Found Below Scripts</p>
-	<?php
-	$items = $items['queue'];
-	// $items = wp_parse_args( $old_settings, $items );
-	update_option( 'load_time_optimizer_scripts', $items );
-	vl( $items );
-	wp_die();
+		global $wp_scripts;
+		$items = (array) $wp_scripts;
+		// vl( $items );
+		// wp_die();
+		// $items = wp_list_pluck( $items['registered'], 'handle' );
+		// $items = wp_list_pluck( $items['queue'], 'handle' );
+		// $items = array_keys( $items );
+		// 
+		?>
+		<p>Found Below Scripts</p>
+		<?php
+		$items = $items['queue'];
+		$items = wp_parse_args( $old_settings, $items );
+		$items = array_unique($items);
+		update_post_meta( get_the_ID(), 'load_time_optimizer_scripts', $items );
+		vl( $items );
+
+		$old_settings = get_post_meta( get_the_ID(), 'load_time_optimizer_styles', true );
+
+		global $wp_styles;
+		$items = (array) $wp_styles;
+		// vl( $items );
+		// wp_die();
+		// $items = wp_list_pluck( $items['registered'], 'handle' );
+		// $items = wp_list_pluck( $items['queue'], 'handle' );
+		// $items = array_keys( $items );
+		// 
+		?>
+		<p>Found Below Styles</p>
+		<?php
+		$items = $items['queue'];
+		$items = wp_parse_args( $old_settings, $items );
+		$items = array_unique($items);
+		update_post_meta( get_the_ID(), 'load_time_optimizer_styles', $items );
+		vl( $items );
+		wp_die();
+	}
 } );
 
 function theme_name_scripts() {
@@ -104,8 +145,15 @@ function theme_name_scripts() {
 		// vl( $stored );
 		if( $stored ) {
 			foreach ($stored as $key => $script) {
-				wp_dequeue_style( $script );
 				wp_dequeue_script( $script );
+			}
+		}
+
+		$stored = get_post_meta( get_the_ID(), 'lto_styles', true );
+		// vl( $stored );
+		if( $stored ) {
+			foreach ($stored as $key => $style) {
+				wp_dequeue_style( $style );
 			}
 		}
 	}
