@@ -24,10 +24,10 @@ define( 'LTO_URI',  plugins_url( '/', LTO_FILE ) );
 /**
  * Register meta box(es).
  */
-function wpdocs_register_meta_boxes() {
+function prefix_register_meta_boxes() {
     add_meta_box( 'meta-box-id', __( 'My Meta Box', 'textdomain' ), 'wpdocs_my_display_callback', array( 'post', 'page' ) );
 }
-add_action( 'add_meta_boxes', 'wpdocs_register_meta_boxes' );
+add_action( 'add_meta_boxes', 'prefix_register_meta_boxes' );
  
 /**
  * Meta box display callback.
@@ -40,34 +40,47 @@ function wpdocs_my_display_callback( $post ) {
 	?>
 	<h2><b>Scripts</b></h2>
 	<?php
-	foreach ($settings as $key => $setting) {
-		$checked = ( ! empty( $stored ) && in_array($setting, $stored) ) ? ' checked="checked" ' : '';
+	if( $settings ) {
+		foreach ($settings as $key => $setting) {
+			$checked = ( ! empty( $stored ) && in_array($setting, $stored) ) ? ' checked="checked" ' : '';
+			?>
+			<p>
+				<label>
+					<input <?php echo $checked; ?> type="checkbox" name="lto-scripts[]" value="<?php echo $setting; ?>" /><?php echo $setting; ?>
+				</label>
+			</p>
+			<?php
+		}
+	} else {
 		?>
-		<p>
-			<label>
-				<input <?php echo $checked; ?> type="checkbox" name="lto-scripts[]" value="<?php echo $setting; ?>" /><?php echo $setting; ?>
-			</label>
-		</p>
+		<p>No Scripts Found!</p>
 		<?php
 	}
 
 	$stored = get_post_meta( $post->ID, 'lto_styles', true );
 	$settings = get_post_meta( $post->ID, 'load_time_optimizer_styles', true );
 	?>
-	<h2><b>Scripts</b></h2>
+	<h2><b>Styles</b></h2>
 	<?php
-	foreach ($settings as $key => $setting) {
-		$checked = ( ! empty( $stored ) && in_array($setting, $stored) ) ? ' checked="checked" ' : '';
+	if( $settings ) {
+		foreach ($settings as $key => $setting) {
+			$checked = ( ! empty( $stored ) && in_array($setting, $stored) ) ? ' checked="checked" ' : '';
+			?>
+			<p>
+				<label>
+					<input <?php echo $checked; ?> type="checkbox" name="lto-styles[]" value="<?php echo $setting; ?>" /><?php echo $setting; ?>
+				</label>
+			</p>
+			<?php
+		}	
+	} else {
 		?>
-		<p>
-			<label>
-				<input <?php echo $checked; ?> type="checkbox" name="lto-styles[]" value="<?php echo $setting; ?>" /><?php echo $setting; ?>
-			</label>
-		</p>
+		<p>No Styles Found!</p>
 		<?php
 	}
 	?>
-	<p>Get Latest Scripts <a target="_blank" href="<?php echo get_the_permalink( get_the_ID() ); ?>?scripts" />Get Links</a></p>
+	<br/>
+	<p>Get Latest Scripts & Styles <a target="_blank" href="<?php echo get_the_permalink( get_the_ID() ); ?>?scripts" />Get Links</a></p>
 	<?php
 	// vl( $settings );
 }
@@ -134,6 +147,11 @@ add_action( 'wp_head', function() {
 		$items = array_unique($items);
 		update_post_meta( get_the_ID(), 'load_time_optimizer_styles', $items );
 		vl( $items );
+		?>
+		<p>
+			Now go back and check all the unwanted JS & CSS file. <a href="<?php echo get_edit_post_link( get_the_ID() ); ?>#advanced-sortables">Go to Edit Screen</a>.
+		</p>
+		<?php
 		wp_die();
 	}
 } );
